@@ -4,7 +4,7 @@ The system was developed for the 2024 Robotic Grasping and Manipulation Competit
 
 This repository provides the packages to perform vision-based human to robot fast handover. The code is tested on **Ubuntu 20.04** with **ROS Noetic**. 
 
-Our setup utilizes two computers connected to the same local network, one for the **vision pipeline**, and the other for **robot control**. For the setup of the PC running the vision pipeline, please refer to the relative [guide](https://github.com/SIRSIIT/fast_handover/blob/main/handover_vision/README.md), while for the robot control, please refer to [this one](https://github.com/SIRSIIT/fast_handover/blob/main/handover_robot/README.md). 
+Our setup utilizes two computers connected to the same local network, one for the **vision pipeline**, and the other for **robot control**. For the setup of the PC running the vision pipeline, please refer to the relative [guide](https://github.com/SIRSIIT/fast-handover/blob/main/handover_vision/README.md), while for the robot control, please refer to [this one](https://github.com/SIRSIIT/fast-handover/blob/main/handover_robot/README.md). 
 
 ## Network Configuration
 
