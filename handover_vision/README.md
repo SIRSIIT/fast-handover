@@ -1,4 +1,4 @@
-# Vision-Based Human-Robot Fast Handover
+# Vision pipeline
 
 This repository provides guidelines and necessary scripts to run the vision-based pipeline for human-to-robot handover. The setup is tested with ROS Noetic on Ubuntu 20.04 using two Intel Realsense D435i cameras.
 
