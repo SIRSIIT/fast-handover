@@ -17,7 +17,9 @@ The code is tested on **Ubuntu 20.04** with **ROS Noetic**.
 
 ## Prerequisites
 
-Before starting, ensure the following dependencies are installed:
+Before starting, ensure the following dependencies are installed. 
+Alternatively, you can use the provided [Docker container](#docker-container) to set up the environment with all dependencies pre-installed, making the process easier and ensuring a plug-and-play solution.
+
 
 - **MoveIt**: Follow the [Getting Started Guide](https://ros-planning.github.io/moveit_tutorials/doc/getting_started/getting_started.html) to install MoveIt.
 
@@ -78,7 +80,9 @@ Note that the following packages `franka_control` has been modified to add `join
 - **Franka Emika Panda MoveIt Config Package** Panda robot MoveIt integration from this [repo](https://github.com/moveit/panda_moveit_config.git)
 
 This repository has been used in the following branch: `noetic-devel`.
-`git clone --branch noetic-devel https://github.com/moveit/panda_moveit_config.git`
+```bash
+git clone --branch noetic-devel https://github.com/moveit/panda_moveit_config.git
+```
 
 Note that the package has been modified. The controller `vel_joint_traj_controller` has been added to the controller list. After cloning the repository, copy the content of the custom packages from this repository into the respective cloned directory.
 
