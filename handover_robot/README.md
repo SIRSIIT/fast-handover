@@ -31,8 +31,9 @@ After cloning the repository, copy the content of the custom package from this r
 - **ROS-Industrial Universal Robot**: ROS-Industrial support for [Universal Robots](https://wiki.ros.org/universal_robot)  manipulators. 
 
 This repository has been used in the following branch: `1.3.3`.
-`git clone --branch 1.3.3 https://github.com/ros-industrial/universal_robot.git`
-
+```bash
+git clone --branch 1.3.3 https://github.com/ros-industrial/universal_robot.git
+```
 Note that the following packages `ur_description` and `ur5_moveit_config` have been modified to add specific functionality to the control code. Here's an overview of the key changes:
 
 - The file `ur_macro_robotiq.xacro` was added to integrate the Robotiq gripper with the UR5 robot's kinematic model.
