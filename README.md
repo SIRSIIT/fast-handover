@@ -1,4 +1,4 @@
-# Vision-based Human to Robot Fast Handover 
+# Fast Human-Robot Handover using a Vision-based pipeline 
 
 The system was developed for the 2024 Robotic Grasping and Manipulation Competition ([RGMC - Sub-Track \#4 on Human-to-Robot Handovers](https://corsmal.eecs.qmul.ac.uk/rgm24icra/)), and the code is herein released for reproducibility. 
 
