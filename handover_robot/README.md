@@ -21,7 +21,7 @@ Before starting, ensure the following dependencies are installed.
 Alternatively, you can use the provided [Docker container](#docker-container) to set up the environment with all dependencies pre-installed, making the process easier and ensuring a plug-and-play solution.
 
 
-- **MoveIt**: Follow the [Getting Started Guide](https://ros-planning.github.io/moveit_tutorials/doc/getting_started/getting_started.html) to install MoveIt.
+- **MoveIt**: Follow the [Getting Started Guide](https://moveit.github.io/moveit_tutorials/doc/getting_started/getting_started.html) to install MoveIt.
 
 - **Universal Robots ROS Driver**: Follow this [installation](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver). 
 
