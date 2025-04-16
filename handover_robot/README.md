@@ -267,7 +267,7 @@ You can easily run the commands and set up the environment using Docker, making 
      docker run -it --privileged -v ~/workspace:/home/workspace/shared --net=host --cap-add SYS_NICE --env='QT_X11_NO_MITSHM=1' --volume='/tmp/.X11-unix:/tmp/.X11-unix:rw' -e DISPLAY=unix${DISPLAY} --device /dev/dri/card0:/dev/dri/card0 -id ros_noetic:handover_robot
     ```
 
-4. Open 5 `bash` sessions
+4. Open 6 `bash` sessions
 
 ```bash
   CONTAINER_ID=$(docker ps -lq)
@@ -286,7 +286,7 @@ chmod +x kill_all.sh
 
 ### Automate Terminal Setup with `handover_run.sh` Script
 
-To simplify the process of launching the Docker container and opening 5 terminal sessions in [Terminator](https://github.com/gnome-terminator) with the desired layout, use the provided `handover_run.sh` script. 
+To simplify the process of launching the Docker container and opening 7 terminal sessions in [Terminator](https://github.com/gnome-terminator) with the desired layout, use the provided `handover_run.sh` script. 
 
 Steps to use handover_run.sh:
 
