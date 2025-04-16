@@ -5,12 +5,7 @@ The `servo_ctrl` ROS package integrates with **MoveIt Servo** to allow real-time
 
 ## Configuration Files
 
-The package includes configuration files for both **UR5** and **Panda** robots.
-
-### `config_panda.yaml`
-
-### `config_ur5.yaml`
-
+The package includes two configuration files, `config_ur.yaml` and `config_panda.yaml`, for both **UR5** and **Panda** robots.
 
 ## Launch File
 
