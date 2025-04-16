@@ -304,7 +304,7 @@ chmod +x handover_run.sh
 
 4. Configure the Layout. Set up your layout with the required splits and terminal arrangement as shown in the figure below.
 
-  ![Terminator Layout](terminator_ROSLayout.png)
+  ![Terminator Layout](images/terminator_ROSLayout.png)
 
 5. Once the layout is configured, save it by clicking **Save**.
 
