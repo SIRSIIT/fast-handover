@@ -35,5 +35,8 @@ rosrun smach_handover_ctrl controller_server.py _robot:=panda
 rosrun smach_handover_ctrl planner.py _robot:=panda
 ```
 
-
 Once the nodes are running, the robot will start the handover process, transitioning through various states like tracking, grasping, and placing objects based on the state machine's flow.
+
+<p align="center">
+      <img src="docs/smach.png" />
+</p>
