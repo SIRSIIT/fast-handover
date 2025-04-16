@@ -81,6 +81,7 @@ Note that the following packages `franka_control` has been modified to add `join
 - **Franka Emika Panda MoveIt Config Package** Panda robot MoveIt integration from this [repo](https://github.com/moveit/panda_moveit_config.git)
 
 This repository has been used in the following branch: `noetic-devel`.
+
 ```bash
 git clone --branch noetic-devel https://github.com/moveit/panda_moveit_config.git
 ```
