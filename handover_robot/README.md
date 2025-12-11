@@ -9,8 +9,8 @@ The code is tested on **Ubuntu 20.04** with **ROS Noetic**.
 
 1. [Prerequisites](#prerequisites)
 2. [UR5](#ur5)
-3. [Franka Panda](#franka)
-4. [Robotiq-2F 85](#robotiq)
+3. [Franka Panda](#franka-panda)
+4. [Robotiq-2F 85](#robotiq-2F-85)
 5. [Launching the control pipeline](#launching-the-control-pipeline)
 6. [Docker container](#docker-container)
 ---
