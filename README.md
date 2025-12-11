@@ -1,10 +1,18 @@
 # Fast Human-Robot Handover using a Vision-based pipeline 
 
-The system was developed for the 2024 Robotic Grasping and Manipulation Competition ([RGMC - Sub-Track \#4 on Human-to-Robot Handovers](https://corsmal.eecs.qmul.ac.uk/rgm24icra/)), and the code is herein released for reproducibility. 
+This repository provides the packages to perform vision-based human-to-robot fast handover. The code is tested on **Ubuntu 20.04** with **ROS Noetic**. 
 
-This repository provides the packages to perform vision-based human to robot fast handover. The code is tested on **Ubuntu 20.04** with **ROS Noetic**. 
+The system was developed for the Robotic Grasping and Manipulation Competition (RGMC) - Sub-Track \#4 on Human-to-Robot Handovers ([2024 RGMC](https://corsmal.eecs.qmul.ac.uk/rgm24icra/), [2025 RGMC](https://corsmal.github.io/rgmc2025-handover-track/)) and the code is herein released for reproducibility. 
 
-Our setup utilizes two computers connected to the same local network, one for the **vision pipeline**, and the other for **robot control**. For the setup of the PC running the vision pipeline, please refer to the relative [guide](https://github.com/SIRSIIT/fast-handover/blob/main/handover_vision/README.md), while for the robot control, please refer to [this one](https://github.com/SIRSIIT/fast-handover/blob/main/handover_robot/README.md). 
+### RGMC ICRA 24
+[![RGMC ICRA 24 - Handover](https://img.youtube.com/vi/4wzR3eVm9P0/0.jpg)](https://www.youtube.com/watch?v=4wzR3eVm9P0)
+
+### RGMC ICRA 25
+[![RGMC ICRA 25 - Handover](https://img.youtube.com/vi/FGFlR_2N6G4/0.jpg)](https://www.youtube.com/watch?v=FGFlR_2N6G4)
+
+---
+
+Our setup utilizes two PCs connected to the same local network, one for the **vision pipeline**, and the other for **robot control**. For the setup of the PC running the vision pipeline, please refer to the relative [guide](https://github.com/SIRSIIT/fast-handover/blob/main/handover_vision/README.md), while for the robot control, please refer to [this one](https://github.com/SIRSIIT/fast-handover/blob/main/handover_robot/README.md). 
 
 ## Network Configuration
 
@@ -42,12 +50,3 @@ Then, apply the changes:
 ```bash
 source ~/.bashrc
 ```
----
-
-# Videos of the RGMC competition
-### RGMC ICRA 24
-[![RGMC ICRA 24 - Handover](https://img.youtube.com/vi/4wzR3eVm9P0/0.jpg)](https://www.youtube.com/watch?v=4wzR3eVm9P0)
-
-### RGMC ICRA 25
-[![RGMC ICRA 25 - Handover](https://img.youtube.com/vi/FGFlR_2N6G4/0.jpg)](https://www.youtube.com/watch?v=FGFlR_2N6G4)
-
