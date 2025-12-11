@@ -56,7 +56,7 @@ def main():
 
     state_machine_context = {
     'current_cycle': 0,
-    'max_cycles': 24
+    'max_cycles': 500
     }
     
     with sm:
@@ -99,14 +99,14 @@ def main():
             def tracking_cb(userdata, goal):
                 movetopose_goal = PoseGoal()
                 #t=raw_input('Go?')
+                userdata.handover_time = rospy.Time.now().to_sec()
+                print('Start time',userdata.handover_time)
                 return movetopose_goal
 
             def tracking_result_cb(userdata, status, result):
                 if status == GoalStatus.SUCCEEDED:
                     userdata.obj_pose = result.pose #target pose -> FINAL_POSE
-                    userdata.handover_time = rospy.Time.now().to_sec()
-                    print('Start time',userdata.handover_time)
-
+                    
                     return 'succeeded'
                 elif status == GoalStatus.PREEMPTED:
                     return 'preempted'
@@ -129,11 +129,17 @@ def main():
 
             def grasp_goal_cb(userdata, goal):
                 gripper_goal = GripperGoal()
+                elapsed = (rospy.Time.now().to_sec() - userdata.handover_time)
+                rospy.loginfo("Human maneuvering time: %.3f sec", elapsed) 
+                userdata.handover_time = rospy.Time.now().to_sec()
 
                 if robot=="ur5":
                     gripper_goal.cmd_gripper.data = 150 #180 #ROBOTIQ
                 elif robot=="panda":
-                    gripper_goal.cmd_gripper.data = 0.05 #PANDA GRIPPER
+                    gripper_goal.cmd_gripper.data = 0.02 # 0.015 #PANDA GRIPPER
+                    position_based_grasp = rospy.get_param("position_based_grasp", True)
+                    if position_based_grasp:
+                        gripper_goal.flag.data = True # Use MoveAction instead of GraspAction
 
                 return gripper_goal
 
@@ -163,8 +169,12 @@ def main():
             def finalpose_goal_cb(userdata, goal):
                 place_goal = PoseGoal()                
                 place_goal.goal_pose = userdata.obj_pose
-                place_goal.goal_pose.pose.position.z = max(place_goal.goal_pose.pose.position.z,0.05)
+                place_goal.goal_pose.pose.position.z = max(place_goal.goal_pose.pose.position.z,0.015)
                 place_goal.flag.data = False
+                elapsed = (rospy.Time.now().to_sec() - userdata.handover_time)
+                rospy.loginfo("Handover time: %.3f sec", elapsed) 
+
+                userdata.handover_time = rospy.Time.now().to_sec()
                 return place_goal
 
             def finalpose_result_cb(userdata, status, result):
@@ -195,11 +205,15 @@ def main():
                     gripper_goal.cmd_gripper.data = 0 # ROBOTIQ
                 elif robot=="panda":
                     gripper_goal.cmd_gripper.data = 0.08 # PANDA GRIPPER
+                    gripper_goal.flag.data = True # Use MoveAction instead of GraspAction
+
                 return gripper_goal
 
             def place_result_cb(userdata, status, result):
                 if status == GoalStatus.SUCCEEDED:
-                    userdata.target_pose = result                    
+                    userdata.target_pose = result    
+                    elapsed = (rospy.Time.now().to_sec() - userdata.handover_time)
+                    rospy.loginfo("Robot maneuvering time: %.3f sec", elapsed)                
                     return 'succeeded'
                 elif status == GoalStatus.PREEMPTED:
                     return 'preempted'
@@ -222,7 +236,7 @@ def main():
                                
             def goback_goal_cb(userdata, goal):
                 goback_goal = PoseGoal() 
-                #EE displacement
+                #EE displacement 
                 goback_goal.goal_pose.pose.position.x =  0.01
                 goback_goal.goal_pose.pose.position.y =  0.01
                 goback_goal.goal_pose.pose.position.z = -0.09
@@ -234,8 +248,6 @@ def main():
 
             def goback_result_cb(userdata, status, result):
                 if status == GoalStatus.SUCCEEDED:
-                    elapsed = (rospy.Time.now().to_sec() - userdata.handover_time)
-                    rospy.loginfo("Handover time: %.3f sec", elapsed)
                     if robot=="panda":
                         rospy.sleep(2)
                     return 'succeeded'
