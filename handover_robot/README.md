@@ -9,7 +9,7 @@ The code is tested on **Ubuntu 20.04** with **ROS Noetic**.
 
 1. [Prerequisites](#prerequisites)
 2. [UR5](#ur5)
-3. [Franka Robot](#franka)
+3. [Franka Panda](#franka)
 4. [Robotiq-2F 85](#robotiq)
 5. [Launching the control pipeline](#launching-the-control-pipeline)
 6. [Docker container](#docker-container)
@@ -65,7 +65,7 @@ cp -R universal_robot/* /path/to/your/ros_workspace/src/universal_robot/
 ```
 
 
-- **Robotiq-85 Gripper**: Install the Robotiq-85 ROS Driver from this [repo](https://github.com/jr-robotics/robotiq.git). Useful tutorials can be found on the [ROS wiki](https://wiki.ros.org/robotiq/Tutorials). 
+- **Robotiq-2F-85 Gripper**: Install the Robotiq-2F-85 ROS Driver from this [repo](https://github.com/jr-robotics/robotiq.git). Useful tutorials can be found on the [ROS wiki](https://wiki.ros.org/robotiq/Tutorials). 
 Clone the ROS package providing a URDF model of the [Robotiq 2-Finger Adaptive Robot Gripper](https://github.com/a-price/robotiq_arg85_description.git).
 
 Note that the file `robotiq_arg85.urdf.xacro` has been modified. Copy the content of the custom packages into the respective cloned directories, following the procedure explained above.
@@ -141,9 +141,9 @@ Though this step is not necessary to control the robot using this driver, it is 
 
 **Prepare the robot**
 
-For using the `ur_robot_driver` with a real robot you need to install the `externalcontrol-x.x.x.urcap` which can be found [here](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver).
+For using the `ur_robot_driver` with a real robot, you need to install the `externalcontrol-x.x.x.urcap`, which can be found [here](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver).
 
-For installing the necessary URCap and creating a program, please see the individual tutorials on how to setup a CB3 robot or how to setup an e-Series robot.
+For installing the necessary URCap and creating a program, please refer to the individual tutorials on setting up a CB3 robot or an e-Series robot.
 
 ### URCap installation
 
@@ -151,11 +151,11 @@ For installing the necessary URCap and creating a program, please see the indivi
 
 - **e-Series**: https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/ur_robot_driver/doc/install_urcap_e_series.md
 
-To setup the tool communication on an e-Series robot, please consider the tool communication setup guide.
+To set up tool communication on an e-Series robot, please refer to the tool communication setup guide.
 
 ---
 
-## Franka 
+## Franka Panda 
 
 ### **libfranka**
 Install or compile libfranka for [Linux](https://frankaemika.github.io/docs/installation_linux.html).
@@ -165,11 +165,11 @@ This repository has been used in the following branch: `0.9.2`.
 
 ---
 
-## Robotiq-85 2F
+## Robotiq-2F 85
 
 ### Setting up a Robotiq-85 Gripper.
 
-In our pipeline, we control the Robotiq gripper by connecting it to a PC using a USB to RS-485 converter. Manage the gripper with MODBUS commands as described in this [Robotiq tutorial](https://wiki.ros.org/robotiq/Tutorials/Control%20of%20a%202-Finger%20Gripper%20using%20the%20Modbus%20RTU%20protocol%20%28ros%20kinetic%20and%20newer%20releases%29).
+In our pipeline, we control the Robotiq gripper by connecting it to a PC using a USB-to-RS-485 converter. Manage the gripper with MODBUS commands as described in this [Robotiq tutorial](https://wiki.ros.org/robotiq/Tutorials/Control%20of%20a%202-Finger%20Gripper%20using%20the%20Modbus%20RTU%20protocol%20%28ros%20kinetic%20and%20newer%20releases%29).
 
 ---
 
@@ -272,7 +272,7 @@ You can easily run the commands and set up the environment using Docker, making 
 ```bash
   CONTAINER_ID=$(docker ps -lq)
 
-  docker exec -it $CONTAINER_ID bash"
+  docker exec -it $CONTAINER_ID bash
 ```
 
 In each terminal, run the commands listed [above](#launching-the-control-pipeline).
