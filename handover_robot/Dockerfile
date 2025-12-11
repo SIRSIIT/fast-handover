@@ -4,6 +4,22 @@ FROM ros:noetic-ros-core
 ENV DEBIAN_FRONTEND=noninteractive
 ENV ROS_WORKSPACE=/workspace/handover_ws
 
+# FIX GPG ROS 
+RUN set -eux; \
+    # 1) remove existing repo ROS
+    rm -f /etc/apt/sources.list.d/ros*.list /etc/apt/sources.list.d/ros2*.list || true; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends curl gnupg ca-certificates; \
+    mkdir -p /etc/apt/keyrings; \
+    # 2) keyring ROS
+    curl -fsSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+      | gpg --dearmor -o /etc/apt/keyrings/ros-archive-keyring.gpg; \
+    # 3) repo ROS + signed-by
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" \
+      > /etc/apt/sources.list.d/ros1-latest.list; \
+    # 4) update
+    apt-get update
+
 # Install all system and ROS dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
