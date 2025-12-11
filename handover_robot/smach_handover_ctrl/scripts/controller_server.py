@@ -33,6 +33,7 @@ import sys
 
 from robotiq_2f_gripper_control.msg import _Robotiq2FGripper_robot_output  as outputMsg
 from franka_gripper.msg import MoveAction, MoveGoal, MoveActionGoal
+from franka_gripper.msg import GraspAction, GraspGoal, GraspActionGoal
 import franka_gripper 
 
 from time import sleep
@@ -58,6 +59,7 @@ class JointActionServer:
         self.scene = moveit_commander.PlanningSceneInterface()
         self.group = moveit_commander.MoveGroupCommander(self.movegroup)
         self.group.set_planner_id("RRTstarkConfigDefault")
+        self.group.set_max_velocity_scaling_factor(1.0)
         #self.group.allow_replanning(True)
         #self.group.set_num_planning_attempts(50)
         #self.group.set_planning_time(10)
@@ -172,6 +174,10 @@ class PoseActionServer:
 
         self.frame_base = frame_base
         self.ee_frame = ee_frame
+
+        rospy.wait_for_service('/compute_fk',timeout=500)
+        self.fk_service = rospy.ServiceProxy('/compute_fk', GetPositionFK)
+
         
         self.joint_state_subscriber = rospy.Subscriber('/joint_states', JointState, self.joint_state_callback, queue_size=1)
         self.vel_publisher = rospy.Publisher('/servo_server/delta_twist_cmds', TwistStamped, queue_size=1)
@@ -180,14 +186,13 @@ class PoseActionServer:
         self.goal_pose_subscriber = rospy.Subscriber('/grasp_pose', PoseStamped, self.goal_pose_callback, queue_size=1) #/goal_pose
         self.vel_subscriber = rospy.Subscriber('/servo_server/delta_twist_cmds', TwistStamped, self.velocity_callback, queue_size=1)
         
-        rospy.wait_for_service('/compute_fk')
-        self.fk_service = rospy.ServiceProxy('/compute_fk', GetPositionFK)
+        
 
         self.current_joint_state = None
         self.cur_pose = PoseStamped()
         self.goal_pose = PoseStamped()
 
-        self.Kp = np.array([1.8, 1.8, 2.2]) 
+        self.Kp = np.array([1.9, 1.9, 2.3]) # 1.8 1.8 2.2
         self.Ki = np.array([0.0, 0.0, 0.0])
         self.Kd = np.array([0.05, 0.05, 0.05])
 
@@ -284,12 +289,12 @@ class PoseActionServer:
             self.a_server.set_aborted()
 
     def control_loop(self):
-        dt = 1/50.0
+        dt = 1/50.0  # OLD: 50
         position_integral = 0
         orientation_integral = 0
         max_velocity = 0.06  # Start with a lower max velocity
         velocity_ramp_rate = 0.025  # Incremental increase per cycle
-        rate = rospy.Rate(50)  
+        rate = rospy.Rate(50)  # OLD: 50
 
         velocity_command_filt = np.array([self.vel_cmd.twist.linear.x,self.vel_cmd.twist.linear.y,self.vel_cmd.twist.linear.z]) #np.zeros(3)
         alpha = 0.5
@@ -370,16 +375,19 @@ class CameraActionServer:
         self.frame_base = frame_base
         self.ee_frame = ee_frame
         self.arm = arm
-        
+
+        rospy.wait_for_service('/compute_fk')
+        self.fk_service = rospy.ServiceProxy('/compute_fk', GetPositionFK)
+
 
         self.joint_state_subscriber = rospy.Subscriber('/joint_states', JointState, self.joint_state_callback, queue_size=1)
         self.vel_publisher = rospy.Publisher('/servo_server/delta_twist_cmds', TwistStamped, queue_size=1)
         self.pose_publisher = rospy.Publisher('/current_pose', PoseStamped, queue_size=1)
         self.goal_pose_subscriber = rospy.Subscriber('/hand_pose', PoseStamped, self.goal_pose_callback, queue_size=1) #hand_pose
+        self.object_pose_subscriber = rospy.Subscriber('/object_pose', PoseStamped, self.object_pose_callback, queue_size=1) #hand_pose
         self.obj_bb_subscriber = rospy.Subscriber('/object_bb', BoundingBox3D, self.obj_bb_callback, queue_size=1)
 
-        rospy.wait_for_service('/compute_fk')
-        self.fk_service = rospy.ServiceProxy('/compute_fk', GetPositionFK)
+       
 
         self.current_joint_state = None
         self.cur_pose = PoseStamped()
@@ -390,11 +398,11 @@ class CameraActionServer:
             self.Ki = np.array([0.0, 0.0, 0.0])
             self.Kd = np.array([0.06, 0.06, 0.06])  
         elif self.arm == "panda":
-            self.Kp = np.array([1.5, 1.5, 1.5]) 
+            self.Kp = np.array([1.8, 1.8, 1.8]) 
             self.Ki = np.array([0.0, 0.0, 0.0])
-            self.Kd = np.array([0.05, 0.05, 0.05])
+            self.Kd = np.array([0.06, 0.06, 0.06])
 
-        self.Kp_ori = np.array([1.25, 1.25, 1.25]) 
+        self.Kp_ori = np.array([1.5, 1.5, 1.5]) 
         
         self.Ki_ori = np.array([0.0, 0.0, 0.0])
         self.Kd_ori = np.array([0.1, 0.1, 0.1])
@@ -428,9 +436,10 @@ class CameraActionServer:
     def goal_pose_callback(self, msg):
         self.goal_pose = msg
 
+    def object_pose_callback(self, msg):
+        self.object_pose = msg
 
-    def obj_pose_callback(self, msg):
-        self.obj_pose = msg
+
         
 
     def obj_bb_callback(self, msg):
@@ -504,10 +513,16 @@ class CameraActionServer:
             rospy.logerr("No initial object bb received")
         
         #If the object is short and large the gripper is rotated 
+        '''
         if self.size[1] > 0.09 and self.size[2]<0.09: #self.obj_size.height:
             if self.rotated == False:
-                self.rotated = self.rotate_gripper()
-                
+                if self.arm == 'ur5': 
+                    self.rotated = self.rotate_gripper(rotation=np.array([0,0, 0.70710678, 0.70710678]),axis='x')
+                elif self.arm == 'panda':    
+                    self.rotated = self.rotate_gripper(rotation=np.array([0,0, -0.70710678, 0.70710678]),axis='x')
+                    rospy.sleep(2)
+                    self.rotate_gripper(rotation=np.array([0,0, -0.5, 0.866025]),axis='y')
+        '''
 
         # Check if the hand is close to the object  
         while (np.abs(self.goal_pose.pose.position.x-self.init_obj_bb.center.position.x) > self.size[0]/2 + 0.05  or \
@@ -526,7 +541,7 @@ class CameraActionServer:
         if self.init_hand_pose is None:
             self.offset = PoseStamped()
             self.init_hand_pose = deepcopy(self.goal_pose)
-            self.offset.pose.position.x = self.init_obj_bb.center.position.x - self.init_hand_pose.pose.position.x + self.size[0]/2
+            self.offset.pose.position.x = self.init_obj_bb.center.position.x - self.init_hand_pose.pose.position.x #+ self.size[0]/2
             self.offset.pose.position.y = self.init_obj_bb.center.position.y - self.init_hand_pose.pose.position.y 
             self.offset.pose.position.z = self.init_obj_bb.center.position.z - self.init_hand_pose.pose.position.z
 
@@ -567,7 +582,7 @@ class CameraActionServer:
     def calculate_z_offset(self, object_height, obj_z, hand_z):
         
         if hand_z > obj_z: 
-            offset_z = -.4*object_height #0.46
+            offset_z = -.35*object_height #0.46
         else:
             offset_z =  .4*object_height
 
@@ -575,18 +590,18 @@ class CameraActionServer:
 
 
     
-    def rotate_gripper(self):
+    def rotate_gripper(self, rotation, axis):
         dt = 1/50.0
         rate = rospy.Rate(50) 
 
         max_angular_velocity = 0.1  # Start with a lower max angular velocity
         angular_velocity_ramp_rate = 0.07  # Incremental increase per cycle
 
-        angular_command_filt = 0
+        angular_command_filt = np.zeros(3) 
         alpha = 0.5
 
         orientation_integral = 0
-        Kp = np.array([11, 11, 11])
+        Kp = np.array([2, 2, 2])
         Ki = np.array([0, 0, 0])
         Kd = np.array([0.05, 0.05, 0.05])
         
@@ -595,10 +610,7 @@ class CameraActionServer:
                                     self.cur_pose.pose.orientation.z,
                                     self.cur_pose.pose.orientation.w])
 
-        #additional_rotation = tf_trans.quaternion_from_euler(goal_roll, 0, 0)
-        additional_rotation = np.array([0,0, 0.70710678, 0.70710678])
-        target_quaternion = tf_trans.quaternion_multiply(current_orientation,additional_rotation) #current_orientation*additional_rotation 
-        
+        target_quaternion = tf_trans.quaternion_multiply(current_orientation,rotation) #current_orientation*additional_rotation 
 
 
         while not rospy.is_shutdown():
@@ -610,12 +622,13 @@ class CameraActionServer:
             current_orientation = np.array([self.cur_pose.pose.orientation.x,
                                         self.cur_pose.pose.orientation.y,
                                         self.cur_pose.pose.orientation.z,
-                                        -self.cur_pose.pose.orientation.w])
+                                        self.cur_pose.pose.orientation.w])
 
-            error_quaternion = tf_trans.quaternion_multiply(target_quaternion, current_orientation)
-            ori_error = np.array(tf_trans.euler_from_quaternion(error_quaternion))
 
-            
+            ori_error = np.array(tf_trans.euler_from_quaternion(
+                tf_trans.quaternion_multiply(target_quaternion, 
+                                             tf_trans.quaternion_inverse(current_orientation))))
+        
             orientation_integral += ori_error * dt
             ori_error_derivative = (ori_error - self.last_ori_err) / dt
             self.last_ori_err = ori_error
@@ -627,7 +640,7 @@ class CameraActionServer:
                       
             #print('raw',raw_angular_velocity_x)               
             angular_velocity = np.clip(raw_angular_velocity, -max_angular_velocity, max_angular_velocity)
-            max_angular_velocity = min(max_angular_velocity + angular_velocity_ramp_rate, 2.2)
+            max_angular_velocity = min(max_angular_velocity + angular_velocity_ramp_rate, 1.5)
 
             angular_command_filt += alpha*(angular_velocity-angular_command_filt) #(raw_angular_velocity_x-angular_command_filt) #
 
@@ -637,22 +650,41 @@ class CameraActionServer:
             twist.twist.linear.y=0
             twist.twist.linear.z=0
 
-            twist.twist.angular.x = angular_command_filt[0]            
-            twist.twist.angular.y = 0 #angular_command_filt[1]
-            twist.twist.angular.z = 0 #angular_command_filt[2]
+            if axis == 'x':
+                twist.twist.angular.x = angular_command_filt[0]            
+                twist.twist.angular.y = 0 #angular_command_filt[1]
+                twist.twist.angular.z = 0 #angular_command_filt[2]
+
+                if np.linalg.norm(ori_error[0])<0.01 : 
+                    rospy.loginfo('EE rotated!')
+                    return True
+            elif axis == 'y':
+                twist.twist.angular.x = 0            
+                twist.twist.angular.y = angular_command_filt[1]
+                twist.twist.angular.z = 0
+
+                if np.linalg.norm(ori_error[1])<0.01 : 
+                    rospy.loginfo('EE rotated!')
+                    return True
+
+            elif axis == 'z':
+                twist.twist.angular.x = 0            
+                twist.twist.angular.y = 0
+                twist.twist.angular.z = angular_command_filt[2]
 
             self.vel_publisher.publish(twist)
             
-            if np.linalg.norm(ori_error[0])<0.005 : 
+            '''
+            if np.linalg.norm(ori_error[0])<0.01 : 
                 rospy.loginfo('EE rotated!')
                 return True
-
+            '''
             rate.sleep()
-    
+
 
     def control_loop(self):
-        dt = 1/50.0 
-        rate = rospy.Rate(50)  
+        dt = 1/50.0   # OLD: 50
+        rate = rospy.Rate(50)    # OLD: 50
 
         position_integral = 0
         orientation_integral = 0
@@ -676,7 +708,14 @@ class CameraActionServer:
                                             self.cur_pose.pose.position.y,
                                             self.cur_pose.pose.position.z]))
 
+        init_hand_ori = deepcopy(np.array([self.goal_pose.pose.orientation.x,
+                                            self.goal_pose.pose.orientation.y,
+                                            self.goal_pose.pose.orientation.z,
+                                            self.goal_pose.pose.orientation.w]))
 
+
+        r = np.linalg.norm(np.array([self.offset.pose.position.x,self.offset.pose.position.y]))
+            
 
         while not rospy.is_shutdown():
             if self.a_server.is_preempt_requested():
@@ -692,13 +731,42 @@ class CameraActionServer:
                                             self.cur_pose.pose.orientation.z,
                                             self.cur_pose.pose.orientation.w])
 
+            current_hand_ori = np.array([self.goal_pose.pose.orientation.x,
+                                            self.goal_pose.pose.orientation.y,
+                                            self.goal_pose.pose.orientation.z,
+                                            self.goal_pose.pose.orientation.w])
            
-            offset_w = np.array([self.offset.pose.position.x, self.offset.pose.position.y, self.offset.pose.position.z])
+            #offset_w = np.array([self.offset.pose.position.x, self.offset.pose.position.y, self.offset.pose.position.z])
+            offset_w = np.array([self.offset.pose.position.x, self.offset.pose.position.y, self.offset.pose.position.z, 1])
 
-            goal_position = np.array([self.goal_pose.pose.position.x,
+            ## NEW - HAND ORIENTATION
+            
+            err_hand_ori = tf_trans.euler_from_quaternion(
+                tf_trans.quaternion_multiply(current_hand_ori, 
+                                             tf_trans.quaternion_inverse(init_hand_ori)))
+
+            #print(err_hand_ori)
+            if err_hand_ori[2] > np.pi/2:
+                err_hand_ori[2] = np.pi/2
+            if err_hand_ori[2] < -np.pi/2:
+                err_hand_ori[2] = -np.pi/2
+        
+            Rz = tt.euler_matrix(0,0,err_hand_ori[2])
+            
+            offset_w = Rz.dot(offset_w)
+
+            goal_position = np.array([self.goal_pose.pose.position.x + self.size[0]/2,
                                       self.goal_pose.pose.position.y,
-                                      self.goal_pose.pose.position.z]) + offset_w
+                                      self.goal_pose.pose.position.z]) + offset_w[:3]
 
+            ## END NEW
+
+            '''
+            goal_position = np.array([self.goal_pose.pose.position.x + self.size[0]/2,
+                                      self.goal_pose.pose.position.y,
+                                      self.goal_pose.pose.position.z]) + offset_w[:3]
+            '''
+            
             delta_x = goal_position[0] #- init_pos[0] 
             delta_y = goal_position[1] - init_pos[1] 
 
@@ -714,6 +782,7 @@ class CameraActionServer:
             target_quaternion = tf_trans.quaternion_multiply(init_ori,goal_quaternion) 
             current_orientation[3] = -current_orientation[3]
             error_quaternion = tf_trans.quaternion_multiply(target_quaternion,current_orientation)
+            
             #if error_quaternion[3] < 0:
             #    error_quaternion = -error_quaternion
             ori_error = np.array(tf_trans.euler_from_quaternion(error_quaternion))
@@ -748,7 +817,7 @@ class CameraActionServer:
 
 
             angular_velocity = np.clip(raw_angular_velocity, -max_angular_velocity, max_angular_velocity)
-            max_angular_velocity = min(max_angular_velocity + angular_velocity_ramp_rate, 0.65)
+            max_angular_velocity = min(max_angular_velocity + angular_velocity_ramp_rate, 0.8)
 
             angular_command_filt += 0.1*(angular_velocity-angular_command_filt)
 
@@ -759,14 +828,12 @@ class CameraActionServer:
 
             self.vel_publisher.publish(twist)
 
-            if np.linalg.norm(position_error) < 0.04: # Decrease this value for better precision
-                rospy.loginfo('Goal reached')
+            if np.linalg.norm(position_error) < 0.05: # 0.05: # Decrease this value for better precision
+                rospy.loginfo('Goal reached!!')
                 max_velocity = 0.15 
                 return True, velocity_command_filt
 
-            rate.sleep()
-
-    
+            rate.sleep()    
 
 
 class GripperActionServer:
@@ -792,7 +859,8 @@ class GripperActionServer:
 
         elif self.arm == "panda":
             self.pub_gripper = rospy.Publisher('/franka_gripper/move/goal', MoveActionGoal)
-            self.client = actionlib.SimpleActionClient('/franka_gripper/move', franka_gripper.msg.MoveAction)
+            self.client0 = actionlib.SimpleActionClient('/franka_gripper/move', franka_gripper.msg.MoveAction)
+            self.client1 = actionlib.SimpleActionClient('/franka_gripper/grasp', franka_gripper.msg.GraspAction)
 
         #self.joint_state_subscriber = rospy.Subscriber('/joint_states', JointState, self.joint_state_callback)
         self.cur_pose_subscriber = rospy.Subscriber('/current_pose', PoseStamped, self.cur_pose_callback )
@@ -812,17 +880,34 @@ class GripperActionServer:
 
     def panda_gripper_goal(self, width, speed):
 
-        self.client.wait_for_server()
+        self.client1.wait_for_server()
+
+        goal = franka_gripper.msg.GraspGoal()
+        goal.width = width
+        goal.epsilon.inner = 0.1
+        goal.epsilon.outer = 0.1
+        goal.speed = speed
+        goal.force = 1.0
+
+        self.client1.send_goal(goal)
+
+        self.client1.wait_for_result()
+
+        return self.client1.get_result() 
+
+    def panda_gripper_open(self, width, speed):
+
+        self.client0.wait_for_server()
 
         goal = franka_gripper.msg.MoveGoal()
         goal.width = width
         goal.speed = speed
 
-        self.client.send_goal(goal)
+        self.client0.send_goal(goal)
 
-        self.client.wait_for_result()
+        self.client0.wait_for_result()
 
-        return self.client.get_result() 
+        return self.client0.get_result() 
 
 
     def execute_cb(self, goal):
@@ -863,7 +948,6 @@ class GripperActionServer:
             self.active = False
             if success:
                 result.current_pose = self.cur_pose
-                #print('gripper action pose', result.current_pose)
                 self.a_server.set_succeeded(result)
             else:
                 print("Aborted")
@@ -883,7 +967,12 @@ class GripperActionServer:
                     return
                 else:
                     
-                    self.panda_gripper_goal(float(goal.cmd_gripper.data),speed=0.45)
+                    if goal.flag.data:
+                        self.panda_gripper_open(float(goal.cmd_gripper.data),speed=0.8)
+                    else:
+                        self.panda_gripper_goal(float(goal.cmd_gripper.data),speed=0.8)
+
+
                     #rospy.sleep(0.5)
                     success = True
                     break
@@ -894,7 +983,6 @@ class GripperActionServer:
             self.active = False
             if success:
                 result.current_pose = self.cur_pose
-                #print('gripper action pose', result.current_pose)
                 self.a_server.set_succeeded(result)
             else:
                 print("Aborted")
@@ -927,7 +1015,9 @@ if __name__ == "__main__":
         ee_frame = "panda_hand_tcp"
         controller1 = "effort_joint_trajectory_controller"
         movegroup = "panda_manipulator"
-        joint_config = [0.0, -0.5, 0.06, -2.45, 0.0, 2.0, 0.78] #initial config panda
+        #joint_config = [0.0, -0.5, 0.06, -2.45, 0.0, 2.0, 0.0] #initial config panda
+        joint_config = [0.0, -0.87, 0.028, -2.86, 0.0, 1.6, 0.0] #initial config panda
+
 
 
     else:
