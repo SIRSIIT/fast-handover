@@ -7,7 +7,7 @@ from filterpy.kalman import KalmanFilter
 from collections import deque
 import time
 from std_msgs.msg import Header
-
+import quaternion  
 
 class SensorFusionKalmanNode:
     def __init__(self):
@@ -36,30 +36,51 @@ class SensorFusionKalmanNode:
         self.kf.P *= 1000  # Initial state covariance
         self.kf.R = np.eye(3) * 10  # Measurement noise covariance
         self.kf.Q = np.eye(6) * 0.01  # Process noise covariance
+
+        # Exponential smoothing for orientation
+        self.alpha = 0.05  # Smoothing factor
+        self.prev_q = None
         
         rospy.loginfo("Kalman Filter Sensor Fusion Node Initialized.")
     
     def process_measurement(self, pose: PoseStamped):
         """Process a single pose measurement from any camera."""
-        measurement = np.array([[pose.pose.position.x], [pose.pose.position.y], [pose.pose.position.z]])
+        # -------------------- Position --------------------
+
+        meas_pos = np.array([[pose.pose.position.x], [pose.pose.position.y], [pose.pose.position.z]])
         
         # Predict step
         self.kf.predict()
-        
         # Update step with new measurement
-        self.kf.update(measurement)
-        
+        self.kf.update(meas_pos)
         # Get filtered state
-        fused_state = self.kf.x
+        fused_pos = self.kf.x[:3]
+
+        # -------------------- Orientation --------------------
+        q_meas = np.quaternion(pose.pose.orientation.w,
+                               pose.pose.orientation.x,
+                               pose.pose.orientation.y,
+                               pose.pose.orientation.z)
+
+        if self.prev_q is None:
+            q_fused = q_meas
+        else:
+            # Exponential quaternion smoothing via SLERP
+            q_fused = quaternion.slerp_evaluate(self.prev_q, q_meas, self.alpha)
+
+        self.prev_q = q_fused
         
         # Publish the fused pose
         fused_pose = PoseStamped()
         fused_pose.header.stamp = rospy.Time.now()
         fused_pose.header.frame_id = "world"  
-        fused_pose.pose.position.x = fused_state[0, 0]
-        fused_pose.pose.position.y = fused_state[1, 0]
-        fused_pose.pose.position.z = fused_state[2, 0]
-        fused_pose.pose.orientation = pose.pose.orientation  # Keep orientation as received
+        fused_pose.pose.position.x = fused_pos[0, 0]
+        fused_pose.pose.position.y = fused_pos[1, 0]
+        fused_pose.pose.position.z = fused_pos[2, 0]
+        fused_pose.pose.orientation.x = q_fused.x
+        fused_pose.pose.orientation.y = q_fused.y
+        fused_pose.pose.orientation.z = q_fused.z
+        fused_pose.pose.orientation.w = q_fused.w
 
         self.fused_pub.publish(fused_pose)
 

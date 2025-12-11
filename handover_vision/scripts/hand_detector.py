@@ -16,6 +16,7 @@ from geometry_msgs.msg import PoseArray, Pose, Point, Quaternion, PoseStamped
 import tf
 import sys 
 import ast
+import quaternion
 
 class HandEstimation:
 
@@ -51,12 +52,12 @@ class HandEstimation:
         self.img_reader = message_filters.Subscriber(rgb_topic, Image)
         self.depth_reader = message_filters.Subscriber(depth_topic, Image)
 
-        self.ts = message_filters.ApproximateTimeSynchronizer([self.img_reader, self.depth_reader], 1, slop = 0.05)  # 1 ok per kinect 2
+        self.ts = message_filters.ApproximateTimeSynchronizer([self.img_reader, self.depth_reader], 1, slop = 0.05) 
         self.ts.registerCallback(self.run_inference)
 
 
         # Publishers
-        self.all_hand_poses_pub = rospy.Publisher(self.camera+'_all_hand_poses', PoseArray, queue_size=1)    # TO-DO per debug, da rimuovere se pubblico solo quella più vicina
+        self.all_hand_poses_pub = rospy.Publisher(self.camera+'_all_hand_poses', PoseArray, queue_size=1)    
         self.hand_pose_pub = rospy.Publisher(self.camera+'_hand_detection', PoseStamped, queue_size=1)    
 
         # if self.debug_mode:
@@ -110,13 +111,43 @@ class HandEstimation:
                     if depth != 0:
                         dx, dy, dz = rs.rs2_deproject_pixel_to_point(intrinsics, [x, y], depth) 
                         kp_positions.append(np.array(([dx/1000, dy/1000, dz/1000])).T)
-                if len(kp_positions) != 0:
+
+
+
+                if len(kp_positions) == len(indexes):
                     kp_positions = np.array(kp_positions)
+
                     centroid = np.mean(kp_positions, 0)
-                    centroid_pos = Pose(position=Point(*centroid), orientation=Quaternion(0, 0, 0, 1))
+
+                    # Define x_dir as direction from wrist (0) to index base (5)
+                    x_dir = kp_positions[2] - kp_positions[0] 
+                    x_dir /= np.linalg.norm(x_dir)
+
+                    # Define z_dir as palm normal: cross product of (middle base - wrist) and (ring base - wrist)
+                    v1 = kp_positions[1] - kp_positions[0]  # 9 - 0
+                    v2 = kp_positions[4] - kp_positions[0]  # 13 - 0
+                    z_dir = np.cross(v1, v2)
+
+                    if np.linalg.norm(z_dir) < 1e-6:
+                        # Degenerate case: skip this hand 
+                        continue  
+                    else:
+                        z_dir /= np.linalg.norm(z_dir)
+
+                    # Define y_dir as orthogonal to z and x 
+                    y_dir = np.cross(z_dir, x_dir)
+                    y_dir /= np.linalg.norm(y_dir)
+
+                    # Form rotation matrix with column stacking
+                    R = np.column_stack([x_dir, y_dir, z_dir])
+
+
+                    centroid_pos = Pose(position=Point(*centroid), orientation=quaternion.from_rotation_matrix(R))
                     centroid_pos = transform_pose(centroid_pos, self.trans, self.rot)
-                    centroid_pos.orientation = Quaternion(0, 0, 0, 1)
                    
+                    # adjust hand orientation such as x is pointing towards the robot
+                    centroid_pos = self.adjust_hand_pose(centroid_pos)  
+
                     if  self.xlim[0] <= centroid_pos.position.x <= self.xlim[1] and self.ylim[0] <= centroid_pos.position.y <= self.ylim[1]  and self.zlim[0] <= centroid_pos.position.z <= self.zlim[1] :       # da aggiustare in base a word 
                         hand_poses.append(centroid_pos) 
                     
@@ -152,6 +183,20 @@ class HandEstimation:
         x_f = min(int(x), self.width - 1)
         y_f = min(int(y), self.height - 1)
         return x_f, y_f
+
+    def adjust_hand_pose(self, pose):
+        q = quaternion.as_quat_array(np.array(([
+                pose.orientation.w,
+                pose.orientation.x,
+                pose.orientation.y,
+                pose.orientation.z])))
+        rot = quaternion.as_rotation_matrix(q)
+        x_proj = rot[0, 0]
+        if x_proj > 0:
+            rotator = np.matrix([[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
+            rot = np.dot(rotator, rot)  
+            pose.orientation = quaternion.from_rotation_matrix(rot)
+        return pose
 
 
 
