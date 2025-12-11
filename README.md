@@ -44,6 +44,10 @@ source ~/.bashrc
 ```
 ---
 
-# Video of the RGMC ICRA 24 competition
-
+# Videos of the RGMC competition
+### RGMC ICRA 24
 [![RGMC ICRA 24 - Handover](https://img.youtube.com/vi/4wzR3eVm9P0/0.jpg)](https://www.youtube.com/watch?v=4wzR3eVm9P0)
+
+### RGMC ICRA 25
+[![RGMC ICRA 25 - Handover](https://img.youtube.com/vi/FGFlR_2N6G4/0.jpg)](https://www.youtube.com/watch?v=FGFlR_2N6G4)
+
