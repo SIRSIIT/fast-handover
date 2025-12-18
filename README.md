@@ -2,8 +2,8 @@
 
 This repository provides the packages to perform vision-based human-to-robot fast handover. The code is tested on **Ubuntu 20.04** with **ROS Noetic**. 
 
-The system was developed for the Robotic Grasping and Manipulation Competition (RGMC) - Sub-Track \#4 on Human-to-Robot Handovers ([2024 RGMC](https://corsmal.eecs.qmul.ac.uk/rgm24icra/), [2025 RGMC](https://corsmal.github.io/rgmc2025-handover-track/)) and the code is herein released for reproducibility. 
-
+The system was developed for the Robotic Grasping and Manipulation Competition (RGMC) - Sub-Track \#4 on Human-to-Robot Handovers and won two consecutive editions ([2024 RGMC](https://corsmal.eecs.qmul.ac.uk/rgm24icra/), [2025 RGMC](https://corsmal.github.io/rgmc2025-handover-track/)). The code is herein released for reproducibility. 
+ 
 ### RGMC ICRA 24
 [![RGMC ICRA 24 - Handover](https://img.youtube.com/vi/4wzR3eVm9P0/0.jpg)](https://www.youtube.com/watch?v=4wzR3eVm9P0)
 
