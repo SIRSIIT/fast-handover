@@ -1,6 +1,6 @@
 # Fast Human-Robot Handover using a Vision-based pipeline 
 
-This repository provides the packages to perform vision-based human-to-robot fast handover. The code is tested on **Ubuntu 20.04** with **ROS Noetic**and is hereby released for reproducibility. 
+This repository provides the packages to perform vision-based human-to-robot fast handover. The code is tested on **Ubuntu 20.04** with **ROS Noetic** and is hereby released for reproducibility. 
 
 The system was developed for the Robotic Grasping and Manipulation Competition (RGMC) - Sub-Track on Human-to-Robot Handovers and won two consecutive editions ([2024 RGMC](https://corsmal.eecs.qmul.ac.uk/rgm24icra/), [2025 RGMC](https://corsmal.github.io/rgmc2025-handover-track/)). 
  
@@ -9,6 +9,24 @@ The system was developed for the Robotic Grasping and Manipulation Competition (
 
 ### RGMC ICRA 25
 [![RGMC ICRA 25 - Handover](https://img.youtube.com/vi/FGFlR_2N6G4/0.jpg)](https://www.youtube.com/watch?v=FGFlR_2N6G4)
+
+---
+### Reference
+
+Please acknowledge the authors in any academic publication that uses parts of these codes.
+
+```
+@article{turco2026fast,
+  title={Fast Human-Robot Handover using a Vision-Based Pipeline}, 
+  author={Turco, Enrico and Castellani, Chiara and Salvietti, Gionata and Pozzi, Maria},
+  journal={IEEE Robotics and Automation Practice}, 
+  volume={},
+  number={},
+  pages={1-6},
+  year={2026},
+  publisher={IEEE},
+  doi={10.1109/RAP.2026.3680049}}
+```
 
 ---
 
