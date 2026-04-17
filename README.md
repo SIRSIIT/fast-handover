@@ -20,9 +20,9 @@ Please acknowledge the authors in any academic publication that uses parts of th
   title={Fast Human-Robot Handover using a Vision-Based Pipeline}, 
   author={Turco, Enrico and Castellani, Chiara and Salvietti, Gionata and Pozzi, Maria},
   journal={IEEE Robotics and Automation Practice}, 
-  volume={},
+  volume={1},
   number={},
-  pages={1-6},
+  pages={66-70},
   year={2026},
   publisher={IEEE},
   doi={10.1109/RAP.2026.3680049}}
